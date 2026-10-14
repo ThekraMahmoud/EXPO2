@@ -1,0 +1,8 @@
+package com.example.expo.Service;
+import com.example.expo.Api.ApiException; import com.example.expo.DTO.VisitRequest; import com.example.expo.Model.User; import com.example.expo.Model.VisitedPlace; import com.example.expo.Repository.UserRepository; import com.example.expo.Repository.VisitedPlaceRepository; import lombok.RequiredArgsConstructor; import org.springframework.stereotype.Service; import org.springframework.transaction.annotation.Transactional; import java.util.List;
+@Service @RequiredArgsConstructor public class VisitService {
+ private final UserRepository users; private final VisitedPlaceRepository visits;
+ public List<VisitedPlace> getVisits(Integer userId){if(!users.existsById(userId))throw new ApiException("User not found");return visits.findAllByUser_IdOrderByVisitedAtDesc(userId);}
+ @Transactional public VisitedPlace record(Integer userId, VisitRequest request){User user=users.findById(userId).orElseThrow(()->new ApiException("User not found"));if(visits.existsByUser_IdAndPlaceCode(userId,request.getPlaceCode()))throw new ApiException("This place has already been recorded as visited");VisitedPlace v=new VisitedPlace();v.setUser(user);v.setPlaceCode(request.getPlaceCode());v.setPlaceName(request.getPlaceName());v.setLatitude(request.getLatitude());v.setLongitude(request.getLongitude());return visits.save(v);}
+ @Transactional public void delete(Integer userId,Integer visitId){VisitedPlace v=visits.findById(visitId).orElseThrow(()->new ApiException("Visit not found"));if(!v.getUser().getId().equals(userId))throw new ApiException("Visit does not belong to this user");visits.delete(v);}
+}
