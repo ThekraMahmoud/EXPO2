@@ -92,6 +92,9 @@ public class Invoices {
 //    @Column(nullable = false)
 //    private LocalDateTime updated_at;
 
+
+    /////////Relation
+
     @OneToOne
     @JsonIgnore
     @JoinColumn(name = "order_id", unique = true)

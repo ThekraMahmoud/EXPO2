@@ -12,11 +12,24 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.multipart.support.MissingServletRequestPartException;
 
 import java.sql.SQLIntegrityConstraintViolationException;
 
 @RestControllerAdvice
 public class ControllerAdvice {
+
+    // رسالة واضحة بدل تفاصيل تقنية إذا لم يرسل البائع حقل الملف أو تجاوز حد الرفع.
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ApiResponse> uploadTooLarge(MaxUploadSizeExceededException e) {
+        return ResponseEntity.status(413).body(new ApiResponse("PDF must not exceed 5 MB; request must not exceed 6 MB"));
+    }
+
+    @ExceptionHandler(MissingServletRequestPartException.class)
+    public ResponseEntity<ApiResponse> missingUpload(MissingServletRequestPartException e) {
+        return ResponseEntity.badRequest().body(new ApiResponse("Missing upload field: " + e.getRequestPartName()));
+    }
 
 
     // Our Exception

@@ -17,8 +17,11 @@ public class UserService {
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
+
+    ///هنا سويت تعين للحاله
     public User addUser(User user) {
         user.setPassword(passwordEncoder.encode(user.getPassword()));
+        user.setStatus("ACTIVE");
         return userRepository.save(user);
     }
 

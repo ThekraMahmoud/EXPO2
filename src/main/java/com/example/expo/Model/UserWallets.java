@@ -1,6 +1,7 @@
 package com.example.expo.Model;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Positive;
@@ -27,6 +28,11 @@ public class UserWallets {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
+    @Version
+    @JsonIgnore
+    @Column(nullable = false, columnDefinition = "bigint not null default 0")
+    private long version;
+
 
 
     @PositiveOrZero(message = "balance most be more or equal zero")
@@ -50,14 +56,18 @@ public class UserWallets {
     private LocalDateTime updateAt;
 
 
+    ////////Relation
+
+
 
      @OneToOne
      @JoinColumn(name = "user_id",nullable = false)
+     @JsonIgnore
      private User user;
 
 
 
-     @OneToMany(cascade = CascadeType.ALL,mappedBy = "userWallets")
-     private Set<UserWalletTransaction> userWalletTransaction;
-
+    @OneToMany(mappedBy = "userWallets")
+    @JsonIgnore
+    private Set<UserWalletTransaction> userWalletTransaction;
 }

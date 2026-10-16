@@ -1,4 +1,5 @@
 package com.example.expo.Service;
+import com.example.expo.DTO.InvoiceResponse;
 
 import com.example.expo.Api.ApiException;
 import com.example.expo.DTO.InvoiceRequest;
@@ -22,8 +23,10 @@ public class InvoicesService {
 
 
 
-    public List<Invoices> getAll() {
-        return invoicesRepository.findAll();
+    // صيغة عرض موحدة مع مسار الفاتورة الواحدة؛ لا تتغير حسابات أو حالات الفواتير.
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
+    public List<InvoiceResponse> getAll() {
+        return invoicesRepository.findAll().stream().map(InvoiceResponse::from).toList();
     }
     public void addInvoice(Integer sellerId, InvoiceRequest request) {
         Sellerers sellerers = sellersRepository.findSellerById(sellerId);
@@ -143,5 +146,14 @@ public class InvoicesService {
         invoicesRepository.delete(oldInvoice);
     }
 
+
+
+    // عرض فاتورة واحدة بنفس DTO المستخدم في قائمة الفواتير.
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
+    public InvoiceResponse getById(Integer invoiceId) {
+        Invoices invoice = invoicesRepository.findById(invoiceId)
+                .orElseThrow(() -> new ApiException("invoice id not found"));
+        return InvoiceResponse.from(invoice);
+    }
 
 }

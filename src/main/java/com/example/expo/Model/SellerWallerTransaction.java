@@ -1,12 +1,10 @@
-package com.example.expo.Model;
+        package com.example.expo.Model;
 
+import com.example.expo.Model.SellerersWallets;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -14,50 +12,42 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @Entity
-@AllArgsConstructor
 @NoArgsConstructor
+@AllArgsConstructor
 public class SellerWallerTransaction {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(nullable = false, updatable = false)
     private Integer id;
 
-    @NotNull(message = "Amount is required")
-    @Positive(message = "Amount must be greater than zero")
+    @NotNull
+    @Positive
     @Digits(integer = 10, fraction = 2)
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal amount;
 
-    @NotBlank(message = "Type is required")
-    @Pattern(
-            regexp = "topup|debit|refund",
-            message = "Type must be topup, debit, or refund"
-    )
-    @Column(nullable = false, length = 6)
+    // TOP_UP: إضافة مستحقات البائع
+    // BANK_TRANSFER: تحويل إلى حساب البائع البنكي
+    // REFUND: استرداد مبلغ لعميل
+    @NotBlank
+    @Pattern(regexp = "TOP_UP|BANK_TRANSFER|REFUND")
+    @Column(nullable = false, length = 20)
     private String type;
 
-//    @NotBlank(message = "Description is required")
-//    @Size(max = 255, message = "Description must not exceed 255 characters")
-//    @Column(nullable = false, length = 255)
-//    private String description;
+    @NotBlank
+    @Column(nullable = false, unique = true, length = 100)
+    private String reference;
 
-    @NotNull(message = "Created date is required")
-    @PastOrPresent(message = "Created date cannot be in the future")
+    @NotBlank
+    @Pattern(regexp = "PENDING|SUCCESS|FAILED")
+    @Column(nullable = false, length = 10)
+    private String status;
+
+    @NotNull
     @Column(nullable = false, updatable = false)
     private LocalDateTime created_at;
-//
-//    @NotBlank(message = "Reference is required")
-//    @Size(max = 100, message = "Reference must not exceed 100 characters")
-//    @Column(nullable = false, unique = true, length = 100)
-//    private String reference;
 
-
-
-    /////////////////Relation
-
-    //كل معاملة مرتبطة بمحفظة واحدة
-    @NotNull(message = "Seller wallet is required")
+    @NotNull
     @ManyToOne(optional = false)
     @JoinColumn(name = "seller_wallet_id", nullable = false)
     @JsonIgnore

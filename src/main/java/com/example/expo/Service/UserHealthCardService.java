@@ -7,6 +7,8 @@ import com.example.expo.Repository.UserHealthCardRepository;
 import com.example.expo.Repository.UserRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import java.util.UUID;
 
 import java.util.List;
 
@@ -22,6 +24,7 @@ public class UserHealthCardService {
         return userHealthCardRepository.findAll();
     }
 
+    @Transactional
     public void addHealthCard(Integer userId, UserHealthCard healthCard) {
 
         User user = userRepository.findUserById(userId);
@@ -33,6 +36,10 @@ public class UserHealthCardService {
         if (userHealthCardRepository.findUserHealthCardByUserId(userId) != null) {
             throw new ApiException("User already has a health card");
         }
+        // نستبدل أي قيمة واردة من كود العميل بقيمة يصدرها السيرفر.
+        healthCard.setPublicToken(newPublicToken());
+        HealthCardPatchService.normalize(healthCard);
+        if (healthCard.getCountryCode() == null) healthCard.setCountryCode("SA");
         healthCard.setUser(user);
         userHealthCardRepository.save(healthCard);
     }
@@ -85,4 +92,25 @@ public class UserHealthCardService {
 
         userHealthCardRepository.delete(healthCard);
     }
+    // تجهيز البطاقات القديمة عند طلب QR فقط؛ لا ننشئ بطاقة طبية من العدم.
+    @Transactional
+    public UserHealthCard getHealthCardForQr(Integer userId) {
+        if (userRepository.findUserById(userId) == null) throw new ApiException("User not found");
+        UserHealthCard card = userHealthCardRepository.findByUserIdForQr(userId)
+                .orElseThrow(() -> new ApiException("Health card not found"));
+        if (card.getPublicToken() == null || card.getPublicToken().isBlank()) {
+            card.setPublicToken(newPublicToken());
+            userHealthCardRepository.save(card);
+        }
+        return card;
+    }
+
+    @Transactional(readOnly = true)
+    public UserHealthCard getHealthCardByToken(String token) {
+        if (token == null || !token.matches("[a-f0-9]{32}")) throw new ApiException("Health card not found");
+        return userHealthCardRepository.findByPublicToken(token)
+                .orElseThrow(() -> new ApiException("Health card not found"));
+    }
+
+    private String newPublicToken() { return UUID.randomUUID().toString().replace("-", ""); }
 }

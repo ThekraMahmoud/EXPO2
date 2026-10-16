@@ -35,9 +35,13 @@ public class CartItem {
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal unitPrice;
 
-  @ManyToOne
- @JoinColumn(name = "cart_id", nullable = false)
-   private Cart cart;
+
+    /////////Relation
+
+    @ManyToOne
+    @JsonIgnore // لا نعيد السلة داخل كل عنصر؛ علاقة قاعدة البيانات محفوظة كما هي.
+    @JoinColumn(name = "cart_id", nullable = false)
+    private Cart cart;
 
     @ManyToOne
     @JoinColumn(name = "menu_item_id", nullable = false)
