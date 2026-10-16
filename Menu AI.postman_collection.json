@@ -1,0 +1,102 @@
+{
+  "info": {
+    "name": "Expo - Product Catalog PDF Import",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Upload a seller catalog PDF for any product or service category, review names, specifications and full prices, then confirm. isMenu is the legacy flag for any seller catalog. Existing menu and restaurant route names remain compatible. Backend AI provider is OpenRouter using openrouter/free and explicit cloudflare-ai PDF parsing. Configure OPENROUTER_API_KEY in IntelliJ, not in these localhost requests."
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "sellerId",
+      "value": "7"
+    },
+    {
+      "key": "menuId",
+      "value": "1"
+    },
+    {
+      "key": "itemId",
+      "value": "8"
+    }
+  ],
+  "item": [
+    {
+      "name": "1 - Upload PDF and preview (no save)",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": "{{baseUrl}}/api/v1/menus/{{menuId}}/restaurant/{{sellerId}}/import/preview",
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "file",
+              "type": "file",
+              "src": null,
+              "description": "Select a PDF file from your device, maximum 5 MB."
+            }
+          ]
+        },
+        "description": "In Body > form-data select File for the file field, then choose the PDF. Postman sets Content-Type and multipart boundary automatically."
+      }
+    },
+    {
+      "name": "2 - Confirm every item from latest preview (no body)",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": "{{baseUrl}}/api/v1/menus/{{menuId}}/restaurant/{{sellerId}}/import/confirm",
+        "description": "Body > none. Confirms every item in the latest successful preview for this seller and menu. Incomplete products are saved inactive. Preview expires after 30 minutes or server restart and is consumed only after successful commit. No preview means upload again. Duplicate names are skipped; remaining products are saved. An empty response array means all products already exist."
+      }
+    },
+    {
+      "name": "3 - List menu items",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/v1/menus/{{menuId}}/items"
+      }
+    },
+    {
+      "name": "4 - List all inactive seller products",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/v1/menus/restaurant/{{sellerId}}/items/inactive"
+      }
+    },
+    {
+      "name": "5 - List inactive products in one catalog",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/v1/menus/{{menuId}}/restaurant/{{sellerId}}/items/inactive"
+      }
+    },
+    {
+      "name": "6 - Set reviewed price and activate product",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/v1/menus/items/{{itemId}}/restaurant/{{sellerId}}",
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"name\": \"Laptop X 16GB / 512GB\",\r\n  \"description\": \"16GB RAM, 512GB SSD\",\r\n  \"price\": 3299,\r\n  \"available\": true\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    }
+  ]
+}

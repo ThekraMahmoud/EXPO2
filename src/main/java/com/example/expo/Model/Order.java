@@ -42,6 +42,9 @@ public class Order {
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+
+    //////////Relation
+
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
     private User user;

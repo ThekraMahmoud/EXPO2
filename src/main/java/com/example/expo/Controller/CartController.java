@@ -1,4 +1,5 @@
 package com.example.expo.Controller;
+import com.example.expo.DTO.CartResponse;
 
 import com.example.expo.DTO.CartItemRequest;
 import com.example.expo.Model.Cart;
@@ -16,9 +17,15 @@ import java.util.List;
 @RequestMapping("/api/v1/carts")
 public class CartController {
     private final CartService cartService;
-    @GetMapping("/user/{userId}") public List<Cart> getUserCarts(@PathVariable Integer userId) { return cartService.userCarts(userId); }
-    @PostMapping("/user/{userId}/restaurant/{sellerId}/items") public Cart addItem(@PathVariable Integer userId, @PathVariable Integer sellerId, @Valid @RequestBody CartItemRequest request) { return cartService.addItem(userId, sellerId, request); }
-    @PutMapping("/{cartId}/user/{userId}/items/{itemId}") public Cart updateQuantity(@PathVariable Integer userId, @PathVariable Integer cartId, @PathVariable Integer itemId, @RequestParam @Min(1) Integer quantity) { return cartService.updateQuantity(userId, cartId, itemId, quantity); }
-    @DeleteMapping("/{cartId}/user/{userId}/items/{itemId}") public Cart removeItem(@PathVariable Integer userId, @PathVariable Integer cartId, @PathVariable Integer itemId) { return cartService.removeItem(userId, cartId, itemId); }
-    @DeleteMapping("/{cartId}/user/{userId}/items") public void clear(@PathVariable Integer userId, @PathVariable Integer cartId) { cartService.clear(userId, cartId); }
+    @GetMapping("/user/{userId}") public List<CartResponse> getUserCarts(@PathVariable Integer userId) { return cartService.userCartOutputs(userId); }
+    @PostMapping("/user/{userId}/restaurant/{sellerId}/items") public CartResponse addItem(@PathVariable Integer userId, @PathVariable Integer sellerId, @Valid @RequestBody CartItemRequest request) { return cartService.addItemOutput(userId, sellerId, request); }
+    @PutMapping("/{cartId}/user/{userId}/items/{itemId}") public CartResponse updateQuantity(@PathVariable Integer userId, @PathVariable Integer cartId, @PathVariable Integer itemId, @RequestParam @Min(1) Integer quantity) { return cartService.updateQuantityOutput(userId, cartId, itemId, quantity); }
+    @DeleteMapping("/{cartId}/user/{userId}/items/{itemId}") public CartResponse removeItem(@PathVariable Integer userId, @PathVariable Integer cartId, @PathVariable Integer itemId) { return cartService.removeItemOutput(userId, cartId, itemId); }
+    @DeleteMapping("/{cartId}/user/{userId}/items") public CartResponse clear(@PathVariable Integer userId, @PathVariable Integer cartId) { return cartService.clearOutput(userId, cartId); }
+
+    @GetMapping("/{cartId}/user/{userId}")
+    public CartResponse getCartById(@PathVariable Integer cartId, @PathVariable Integer userId) {
+        return cartService.getCartById(userId, cartId);
+    }
+
 }

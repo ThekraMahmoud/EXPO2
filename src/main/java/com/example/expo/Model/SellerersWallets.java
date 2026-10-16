@@ -24,6 +24,11 @@ public class SellerersWallets {
     @Column(nullable = false, updatable = false)
     private Integer id;
 
+    @Version
+    @JsonIgnore
+    @Column(nullable = false, columnDefinition = "bigint not null default 0")
+    private long version;
+
     @NotNull(message = "Balance is required")
     @PositiveOrZero(message = "Balance must be zero or greater")
     @Digits(integer = 10, fraction = 2)

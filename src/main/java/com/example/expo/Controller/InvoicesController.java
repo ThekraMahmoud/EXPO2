@@ -1,8 +1,8 @@
 package com.example.expo.Controller;
+import com.example.expo.DTO.InvoiceResponse;
 
 import com.example.expo.Api.ApiResponse;
 import com.example.expo.DTO.InvoiceRequest;
-import com.example.expo.Model.Invoices;
 import com.example.expo.Service.InvoicesService;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
@@ -20,7 +20,7 @@ public class InvoicesController {
 
     @GetMapping("/get")
     public ResponseEntity<?> getAllInvoices() {
-        List<Invoices> invoicesList = invoicesService.getAll();
+        List<InvoiceResponse> invoicesList = invoicesService.getAll();
         return ResponseEntity.status(200).body(invoicesList);
     }
 
@@ -43,5 +43,11 @@ public class InvoicesController {
         return ResponseEntity.status(200).body(new ApiResponse("deleted done"));
     }
 
+
+
+    @GetMapping("/{invoiceId}")
+    public ResponseEntity<InvoiceResponse> getInvoice(@PathVariable Integer invoiceId) {
+        return ResponseEntity.ok(invoicesService.getById(invoiceId));
+    }
 
 }

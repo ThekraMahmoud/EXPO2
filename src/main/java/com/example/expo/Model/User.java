@@ -40,18 +40,19 @@ public class User {
     @NotBlank(message = "Please enter password")
     private String password;
 
-    @Pattern(regexp = "^(USER|ADMIN)$")
+    @Pattern(regexp = "^(USER|ADMIN|CAREGIVER)$")
     @NotBlank(message = "please select role")
     private String role;
 
 
-    @NotBlank(message = "Please select status")
     @Pattern(regexp = "^(INACTIVE|ACTIVE)$")
     private String status;
 
     @CreationTimestamp
     @Column(nullable = false,updatable = false)
     private LocalDateTime createdAt;
+
+    ///////////Relation
 
 
 

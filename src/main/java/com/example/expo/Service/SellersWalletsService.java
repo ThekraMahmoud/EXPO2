@@ -1,119 +1,197 @@
-package com.example.expo.Service;
+        package com.example.expo.Service;
 
 import com.example.expo.Api.ApiException;
-import com.example.expo.DTO.SellerWalletResponse;
-import com.example.expo.Model.SellerersWallets;
 import com.example.expo.Model.Sellerers;
+import com.example.expo.Model.SellerersWallets;
+import com.example.expo.Model.SellerWallerTransaction;
 import com.example.expo.Repository.SellersRepository;
 import com.example.expo.Repository.SellersWalletsRepository;
-import jakarta.transaction.Transactional;
-import lombok.RequiredArgsConstructor;
+import com.example.expo.Repository.SellerWallerTransactionRepository;
+
+import lombok.AllArgsConstructor;
+
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Service
-@RequiredArgsConstructor
+@AllArgsConstructor
 public class SellersWalletsService {
 
     private final SellersWalletsRepository sellersWalletsRepository;
     private final SellersRepository sellersRepository;
+    private final SellerWallerTransactionRepository
+            sellerWallerTransactionRepository;
 
-    //get all
-    public List<SellerWalletResponse> getAll() {
-        List<SellerersWallets> wallets = sellersWalletsRepository.findAll();
-        List<SellerWalletResponse> responses = new ArrayList<>();
 
-        for (int i = 0; i < wallets.size(); i++) {//مشينا ع كل السيلر ولت واضفناها داخل الريسبونس واعدنا فقط القيم الي نحتاجها في الرسيبونس
-            responses.add(toResponse(wallets.get(i)));
+    // عرض جميع المحافظ
+    public List<SellerersWallets> getAllWallets() {
+        return sellersWalletsRepository.findAll();
+    }
+
+
+    // عرض محفظة بائع محدد
+    public SellerersWallets getWalletBySellerId(Integer sellerId) {
+
+        Sellerers seller = sellersRepository.findSellerById(sellerId);
+
+        if (seller == null) {
+            throw new ApiException("Seller not found");
         }
 
-        return responses;
+        return sellersWalletsRepository.findAll()
+                .stream()
+                .filter(wallet -> wallet.getSeller() != null
+                        && wallet.getSeller().getId().equals(sellerId))
+                .findFirst()
+                .orElseThrow(() ->
+                        new ApiException("Seller wallet not found"));
     }
 
-    //اسندت القيم الي بالمحفظة الى القيم بالرسيبونس
-    private SellerWalletResponse toResponse(SellerersWallets wallet) {
-        return new SellerWalletResponse(
-                wallet.getId(),
-                wallet.getSeller().getId(),
-                wallet.getBalance(),
-                wallet.getCurrency(),
-                wallet.getStatus()
-        );
-    }
 
+    // إنشاء محفظة للبائع
     @Transactional
-    public void deleteWallet(Integer walletId) {
-        SellerersWallets wallet = sellersWalletsRepository.findSellersWalletsById(walletId);
+    public SellerersWallets addWallet(Integer sellerId) {
+
+        Sellerers seller = sellersRepository.findSellerById(sellerId);
+
+        if (seller == null) {
+            throw new ApiException("Seller not found");
+        }
+
+        if (!"VERIFIED".equals(seller.getVerification_status()) || !"ACTIVE".equals(seller.getStatus()))
+            throw new ApiException("Seller must be approved and active before creating a wallet");
+        boolean walletExists = sellersWalletsRepository.findAll()
+                .stream()
+                .anyMatch(wallet -> wallet.getSeller() != null
+                        && wallet.getSeller().getId().equals(sellerId));
+
+        if (walletExists) {
+            throw new ApiException(
+                    "Seller already has a wallet");
+        }
+
+
+        SellerersWallets wallet = new SellerersWallets();
+
+        wallet.setSeller(seller);
+        wallet.setBalance(BigDecimal.ZERO);
+        wallet.setStatus("ACTIVE"); wallet.setUpdated_at(LocalDateTime.now());
+
+// إضافة التاريخين
+        wallet.setCreated_at(LocalDateTime.now());
+        wallet.setUpdated_at(LocalDateTime.now());
+
+// حفظ المحفظة
+        return sellersWalletsRepository.save(wallet);
+
+    }
+
+    // إيقاف المحفظة
+    @Transactional
+    public void suspendWallet(Integer walletId) {
+
+        SellerersWallets wallet =
+                sellersWalletsRepository.findByIdForUpdate(walletId).orElse(null);
 
         if (wallet == null) {
-            throw new ApiException("wallet id not found");
-        }
-        //bigdecimal.zero يقارن حتى بعدد المنازل وليس فقط الرقم
-        if (wallet.getBalance().compareTo(BigDecimal.ZERO) != 0) {
-            throw new ApiException("cannot delete wallet with a non-zero balance");
-        }
-        wallet.getSeller().setSellerersWallets(null);//حذفنا المحفظة من البائع
-        sellersWalletsRepository.delete(wallet);
-    }
-
-
-    @Transactional
-    public void createWallet(Integer sellerId) {
-        Sellerers seller = sellersRepository.findSellerById(sellerId);//البائع موجود
-        if(seller==null){
-            throw new ApiException("seller id not found");
+            throw new ApiException("Seller wallet not found");
         }
 
-        if (sellersWalletsRepository.existsBySeller_Id(sellerId)) {//اذا كان عنده بطاقة سابقة ممنوع يسجل من جديد
-            throw new ApiException("seller already has a wallet");
-        }
-
-        LocalDateTime now = LocalDateTime.now();
-
-        SellerersWallets wallet = new SellerersWallets();//انشاء المحفظة
-
-
-        wallet.setSeller(seller);//اضفناها للبائع
-        wallet.setBalance(BigDecimal.ZERO);//لازم نسند قيمة للبلنس ونبدأ بصفر والتعديل هيكون بالشراء والايداع
-        wallet.setCurrency("SAR");
-        wallet.setStatus("ACTIVE");
-        wallet.setCreated_at(now);
-        wallet.setUpdated_at(now);
-
-        sellersWalletsRepository.save(wallet);
-        seller.setSellerersWallets(wallet);
-    }
-
-    //العملة - وقت الانشاء - الاي دي - الرصيد , ما ينفع نعدلها بالابديت لازم تتعدل لحالها
-    @Transactional
-    public void updateWallet(Integer walletId, String status) {
-        SellerersWallets wallet = sellersWalletsRepository.findSellersWalletsById(walletId);
-
-        if (wallet == null) {//نتأكد ان المحفظة موجودة
-            throw new ApiException("wallet id not found");
-        }
-
-        if (status == null) {
-            throw new ApiException("status is required");
-        }
-
-        if (!status.equals("ACTIVE") && !status.equals("SUSPENDED")) {//مجبور يدخل فقط هالخيارين بالسسيتم
-            throw new ApiException("status must be ACTIVE or SUSPENDED");
-        }
-
-        wallet.setStatus(status);//نعدل حالة المحفظة
-        wallet.setUpdated_at(LocalDateTime.now());//نحدث وقت التعديل
+        wallet.setStatus("SUSPENDED"); wallet.setUpdated_at(LocalDateTime.now());
 
         sellersWalletsRepository.save(wallet);
     }
 
 
+    // تفعيل المحفظة
+    @Transactional
+    public void activateWallet(Integer walletId) {
+
+        SellerersWallets wallet =
+                sellersWalletsRepository.findByIdForUpdate(walletId).orElse(null);
+
+        if (wallet == null) {
+            throw new ApiException("Seller wallet not found");
+        }
+
+        wallet.setStatus("ACTIVE"); wallet.setUpdated_at(LocalDateTime.now());
+
+        sellersWalletsRepository.save(wallet);
+    }
 
 
+    // طلب تحويل مبلغ من محفظة البائع إلى حسابه البنكي
+    @Transactional
+    public SellerWallerTransaction requestBankTransfer(
+            Integer walletId,
+            BigDecimal amount) {
+
+        SellerersWallets wallet =
+                sellersWalletsRepository.findByIdForUpdate(walletId).orElse(null);
+
+        if (wallet == null) {
+            throw new ApiException("Seller wallet not found");
+        }
+
+        if (!"ACTIVE".equals(wallet.getStatus())) {
+            throw new ApiException("Seller wallet is not active");
+        }
+
+        if (amount == null
+                || amount.signum() <= 0
+                || amount.scale() > 2) {
+            throw new ApiException("Invalid transfer amount");
+        }
+
+        if (wallet.getBalance().compareTo(amount) < 0) {
+            throw new ApiException("Insufficient wallet balance");
+        }
+
+        // خصم المبلغ وحجزه لطلب التحويل
+        wallet.setBalance(
+                wallet.getBalance().subtract(amount)
+        );
+
+        sellersWalletsRepository.save(wallet);
+
+        wallet.setUpdated_at(LocalDateTime.now());
+        // إنشاء سجل التحويل بحالة انتظار
+        SellerWallerTransaction transaction =
+                new SellerWallerTransaction();
+
+        transaction.setSellerWallet(wallet);
+        transaction.setAmount(amount);
+        transaction.setType("BANK_TRANSFER");
+        transaction.setStatus("PENDING");
+        transaction.setReference(
+                "BANK-" + UUID.randomUUID()
+        );
+        transaction.setCreated_at(LocalDateTime.now());
+
+        return sellerWallerTransactionRepository.save(transaction);
+    }
+
+
+    // عرض معاملات محفظة البائع
+    public List<SellerWallerTransaction> getWalletTransactions(
+            Integer walletId) {
+
+        SellerersWallets wallet =
+                sellersWalletsRepository.findSellersWalletsById(walletId);
+
+        if (wallet == null) {
+            throw new ApiException("Seller wallet not found");
+        }
+
+        return sellerWallerTransactionRepository
+                .findAllBySellerWallet_Id(walletId);
+    }
 
 
 

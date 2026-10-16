@@ -36,6 +36,8 @@ public class Cart {
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    ///////////Relation
+
     @NotNull(message = "Cart expiration date is required")
     @Column(nullable = false)
     private LocalDateTime expiresAt;

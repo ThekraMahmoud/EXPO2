@@ -62,9 +62,22 @@ public class MenuService {
         return menuItemRepository.findAllByMenu_Id(menuId);
     }
 
+    public List<MenuItem> inactiveItems(Integer sellerId, Integer menuId) {
+        ownedMenu(sellerId, menuId); // لا نعرض منتجات قائمة تابعة لمؤسسة أخرى.
+        return menuItemRepository.findAllByMenu_IdAndAvailableFalse(menuId);
+    }
+
+    public List<MenuItem> inactiveSellerItems(Integer sellerId) {
+        seller(sellerId); // يشمل كل قوائم المؤسسة، بعد التأكد من وجودها.
+        return menuItemRepository.findAllByMenu_Seller_IdAndAvailableFalse(sellerId);
+    }
+
     private void apply(MenuItem item, MenuItemRequest r) {
         item.setName(r.name().trim()); item.setDescription(r.description()); item.setPrice(r.price());
-        item.setAvailable(r.available() == null || r.available());
+        // نفس شروط اكتمال البيانات في الإضافة والتعديل والاستيراد.
+        // الوصف اختياري؛ الاسم المؤقت والسعر صفر يمنعان التفعيل.
+        item.setAvailable(!r.name().startsWith("[INCOMPLETE NAME]")
+                && r.price().signum() > 0 && (r.available() == null || r.available()));
     }
     private Menu ownedMenu(Integer sellerId, Integer menuId) {
         Menu menu = menuRepository.findById(menuId).orElseThrow(() -> new ApiException("Menu not found"));
@@ -73,4 +86,8 @@ public class MenuService {
     }
     private Sellerers seller(Integer id) { return sellersRepository.findById(id).orElseThrow(() -> new ApiException("Restaurant not found")); }
     private void requireActiveVerified(Sellerers s) { if (!"VERIFIED".equals(s.getVerification_status()) || !"ACTIVE".equals(s.getStatus())) throw new ApiException("Restaurant must be active and verified"); }
+
+    // مسار عرض إضافي؛ لا يغيّر عرض المنيو أو الاستيراد أو غير النشط.
+    public List<Menu> getAllMenusForAdmin() { return menuRepository.findAll(); }
+
 }

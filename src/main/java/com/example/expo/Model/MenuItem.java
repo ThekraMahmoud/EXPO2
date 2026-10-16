@@ -40,6 +40,8 @@ public class MenuItem {
     @Column(nullable = false)
     private Boolean available = true;
 
+    ///////////////////Relation
+
     @ManyToOne
     @JsonIgnore
     @JoinColumn(name = "menu_id", nullable = false)

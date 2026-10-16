@@ -34,6 +34,8 @@ public class OrderItem {
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal unitPrice;
 
+    /////////////Relation
+
     @ManyToOne
     @JsonIgnore
     @JoinColumn(name = "order_id", nullable = false)

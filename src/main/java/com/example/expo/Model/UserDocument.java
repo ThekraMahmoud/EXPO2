@@ -37,6 +37,11 @@ public class UserDocument {
 
 
 
+
+    ///////Relation
+
+
+
     @ManyToOne
     @JoinColumn
     @JsonIgnore

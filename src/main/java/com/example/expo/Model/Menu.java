@@ -22,6 +22,9 @@ public class Menu {
     @Column(nullable = false)
     private String name;
 
+
+    //////////Relation
+
     @ManyToOne
     @JoinColumn(name = "seller_id", nullable = false)
     private Sellerers seller;
